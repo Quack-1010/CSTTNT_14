@@ -34,6 +34,8 @@ description for details.
 Good luck and happy searching!
 """
 
+import re
+import re
 from typing import List, Tuple, Any
 from game import Directions
 from game import Agent
@@ -291,13 +293,13 @@ class CornersProblem(search.SearchProblem):
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
 
     def getStartState(self):
-        goc_con = tuple(self.corners)
-        trang_thai_dau = (self.startingPosition, goc_con)
-        return trang_thai_dau
+        corners = tuple(self.corners)
+        start_state = (self.startingPosition, corners)
+        return start_state
     
     def isGoalState(self, state: Any):
-        vi_tri, goc_con = state
-        return len(goc_con) == 0
+        pos, corners = state
+        return len(corners) == 0
 
     def getSuccessors(self, state: Any):
         """
@@ -309,26 +311,28 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-        vi_tri, goc_con = state
-        x, y = vi_tri
+        pos, corners = state
+        x, y = pos
         successors = []
-        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            # Add a successor state to the successor list if the action is legal
-            # Here's a code snippet for figuring out whether a new position hits a wall:
-            dx, dy = Actions.directionToVector(action)
-            nextx, nexty = int(x + dx), int(y + dy)
-            dam_tuong = self.walls[nextx][nexty]
-            if not dam_tuong:
-                goc_con_tam = list(goc_con)
-                vi_tri_moi = (nextx, nexty)
-                if vi_tri_moi in goc_con_tam:
-                    goc_con_tam.remove(vi_tri_moi)
-                trang_thai_moi = (vi_tri_moi, tuple(goc_con_tam))
-                coststep = 1
-                successors.append((trang_thai_moi, action, coststep))
-        self._expanded += 1 # DO NOT CHANGE
-        return successors
 
+        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+            dx, dy = Actions.directionToVector(action)
+            next_x, next_y = int(x + dx), int(y + dy)
+
+            if not self.walls[next_x][next_y]:# tham khảo gemini trong phần ý tưởng việc kiểm tra tường
+                next_pos = (next_x, next_y)
+                rem_corners = list(corners)
+                
+                if next_pos in rem_corners:
+                    rem_corners.remove(next_pos)
+
+                next_state = (next_pos, tuple(rem_corners))
+                cost = 1
+                successors.append((next_state, action, cost))
+
+        self._expanded += 1  # DO NOT CHANGE
+        return successors
+        
     def getCostOfActions(self, actions):
         """
         Returns the cost of a particular sequence of actions.  If those actions
@@ -484,8 +488,9 @@ class ClosestDotSearchAgent(SearchAgent):
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
 
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        import search
+        way = search.breadthFirstSearch(problem)
+        return way
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -519,9 +524,8 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         complete the problem definition.
         """
         x,y = state
-
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        check = self.food[x][y]
+        return check 
 
 def mazeDistance(point1: Tuple[int, int], point2: Tuple[int, int], gameState: pacman.GameState) -> int:
     """
